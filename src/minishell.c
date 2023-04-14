@@ -23,6 +23,7 @@ void catch_signal(int sig){
 }
 
 int main(){
+	//set up the signal catcher 
 	struct sigaction action; 
 	memset(&action, 0, sizeof(struct sigaction));
 	action.sa_handler = catch_signal; 
@@ -32,12 +33,14 @@ int main(){
 		return EXIT_FAILURE;
 	}
 	
+	// this is to get the cwd so you can print it later
 	char cwd[1024]; 
 	if(getcwd(cwd, sizeof(cwd)) == NULL) {
 		perror("getcwd() error"); 
 		return EXIT_FAILURE;
 	}
 
+	// the main looop
 	char buf[128];
 	while(true){
 		printf("%s[%s]$ ", BRIGHTBLUE, cwd);
@@ -62,7 +65,10 @@ int main(){
 			*eoln = '\0';
 		}
 		// this is just to test - have to remove
-		printf("You entered '%s'.\n", buf);
+		printf("You entered: '%s'.\n", buf);
+
+		// see what the user entered and if it's a special command 
+		// if not, we need to send it to exec
 		if(!strcmp(buf, "exit")) {
 			break;
 		}
