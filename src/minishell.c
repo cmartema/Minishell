@@ -87,6 +87,11 @@ int main(){
 		if(!strcmp(args[0], "exit")) {
 			break;
 		}
+		else if(!strcmp(args[0], "cd")){
+			if(num_args == 1 || args[1] == '~'){
+			}
+		}
+
 	}
 
 	return EXIT_SUCCESS; 
