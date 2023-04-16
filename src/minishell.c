@@ -1,10 +1,11 @@
 /****************************************
  * Name            : minishell.c
- * Authors         : Anita Bui-Martinez (adb2221) and Cristopher Marte Marte (cjm...)
+ * Authors         : Anita Bui-Martinez (adb2221) and Cristopher Marte Marte (cjm2301)
  * Version:          
  * Last modified   :
  * Description     :
- */
+**************************************** */
+
 #include <errno.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -88,6 +89,16 @@ int main(){
 			break;
 		}
 	}
+
+
+	/*
+	 * Attempting Part 5
+	 */
+	  struct passwd *pw = getpwnam(username);
+	  if (!pw) {
+	  fprintf(stderr, "Error: Cannot get passwd entry. %s.\n", strerror(errno);
+	  return EXIT_FAILURE;
+	 
 
 	return EXIT_SUCCESS; 
 
