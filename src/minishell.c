@@ -41,12 +41,16 @@ int main(){
 	}
 
 	// the main looop
-	char buf[128];
 	while(true){
+		char buf[4096];
+		char *args[2048];
+		char *token;
+		int num_args = 0;
+
 		printf("%s[%s]$ ", BRIGHTBLUE, cwd);
 		printf("%s", DEFAULT);
 		fflush(stdout);
-		if(fgets(buf, sizeof(buf), stdin) == NULL){
+		if(fgets(buf, 4096, stdin) == NULL){
 			if(errno = EINTR) {
 				printf("\n");
 				errno = 0;
@@ -64,12 +68,23 @@ int main(){
 		if(eoln != NULL){
 			*eoln = '\0';
 		}
+
+		token = strtok(buf, " \t\n");
+		while(token != NULL && num_args < 2048 - 1){
+			args[num_args++] = token; 
+			token = strtok(NULL, " \t\n");
+		}
+		args[num_args] = NULL;
+
 		// this is just to test - have to remove
-		printf("You entered: '%s'.\n", buf);
+		//printf("You entered: '%s'.\n", buf);
+		for(int i = 0; i < num_args; i++){
+			printf("args[%d] = %s\n", i, args[i]); 
+		}
 
 		// see what the user entered and if it's a special command 
 		// if not, we need to send it to exec
-		if(!strcmp(buf, "exit")) {
+		if(!strcmp(args[0], "exit")) {
 			break;
 		}
 	}
