@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #define BRIGHTBLUE "\x1b[34;1m"
 #define DEFAULT    "\x1b[0m"
@@ -42,7 +43,7 @@ int main(){
 	// this is to get the cwd so you can print it later
 		char cwd[1024]; 
 		if(getcwd(cwd, sizeof(cwd)) == NULL) {
-			perror("getcwd() error"); 
+			fprintf(stderr, "Error: Cannot get current working directory. %s.\n", strerror(errno)); 
 			return EXIT_FAILURE;
 		}
 
@@ -86,7 +87,6 @@ int main(){
 		}*/
 
 		// see what the user entered and if it's a special command 
-		// if not, we need to send it to exec
 		if(!strcmp(args[0], "exit")) {
 			break;
 		}
@@ -108,7 +108,6 @@ int main(){
 					continue; 
 				}
 
-				//printf("Changed directory to %s.\n", homedir); 
 
 			}
 			else {
@@ -120,24 +119,26 @@ int main(){
 			}
 
 		}
-		/*
-		else if(fork() == 0){
-			execvp(arg[0], arg); 
+		else{
+			pid_t pid; 
+		       	if((pid = fork()) < 0){
+				fprintf(stderr, "Error: fork() failed. %s.\n", strerror(errno)); 
+				continue; 
+			}
+			else if(pid > 0) { //parent 
+				wait(NULL); 
+			}
+			else{ // child 
+				if(execvp(args[0], args) == -1){
+					fprintf(stderr, "Error: exec() failed. %s\n", strerror(errno)); 
+					continue; 
+				}
+			}
+			
 		}
-		wait();
-	       */	
 
 	}
 
-
-	/*
-	 * Attempting Part 5
-	 
-	  struct passwd *pw = getpwnam(username);
-	  if (!pw) {
-	  fprintf(stderr, "Error: Cannot get passwd entry. %s.\n", strerror(errno);
-	  return EXIT_FAILURE;
-	 */
 
 	return EXIT_SUCCESS; 
 
