@@ -7,11 +7,13 @@
 **************************************** */
 
 #include <errno.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <unistd.h>
 #define BRIGHTBLUE "\x1b[34;1m"
 #define DEFAULT    "\x1b[0m"
@@ -33,16 +35,17 @@ int main(){
 		perror("sigaction(SIGINT)");
 		return EXIT_FAILURE;
 	}
+
+	// the main looooooop
+	while(true){
 	
 	// this is to get the cwd so you can print it later
-	char cwd[1024]; 
-	if(getcwd(cwd, sizeof(cwd)) == NULL) {
-		perror("getcwd() error"); 
-		return EXIT_FAILURE;
-	}
+		char cwd[1024]; 
+		if(getcwd(cwd, sizeof(cwd)) == NULL) {
+			perror("getcwd() error"); 
+			return EXIT_FAILURE;
+		}
 
-	// the main looop
-	while(true){
 		char buf[4096];
 		char *args[2048];
 		char *token;
@@ -78,10 +81,9 @@ int main(){
 		args[num_args] = NULL;
 
 		// this is just to test - have to remove
-		//printf("You entered: '%s'.\n", buf);
-		for(int i = 0; i < num_args; i++){
+		/*for(int i = 0; i < num_args; i++){
 			printf("args[%d] = %s\n", i, args[i]); 
-		}
+		}*/
 
 		// see what the user entered and if it's a special command 
 		// if not, we need to send it to exec
@@ -89,8 +91,36 @@ int main(){
 			break;
 		}
 		else if(!strcmp(args[0], "cd")){
-			if(num_args == 1 || args[1] == '~'){
+			if(num_args > 2){
+				fprintf(stderr, "Error: Too many arguments to cd.\n");
+				continue;
 			}
+			else if(num_args == 1 || !strcmp(args[1], "~")){
+				uid_t user_id = getuid();
+				struct passwd *pw = getpwuid(user_id); 
+				if(!pw){
+					fprintf(stderr, "Error: Cannot get passwd entry. %s\n", strerror(errno)); 
+					//return EXIT_FAILURE; // im not sure you'd exit in failure or just restart the loop
+					// actually i'm gonna continue instead of exit_failure because that's how the shell should work
+					continue; 
+				}
+				const char *homedir = pw->pw_dir; 
+				if(chdir(homedir) == -1){
+					// probably need to fix this error message
+					fprintf(stderr, "Error: Cannot change directory to '%s'. %s.\n", homedir, strerror(errno)); 
+					continue; 
+				}
+
+				//printf("Changed directory to %s.\n", homedir); 
+
+			}
+			else {
+				if(chdir(args[1]) == -1){
+					fprintf(stderr, "Error: Cannot change directory to '%s'. %s.\n", args[1], strerror(errno));
+					continue;
+				}
+			}
+
 		}
 
 	}
@@ -98,12 +128,12 @@ int main(){
 
 	/*
 	 * Attempting Part 5
-	 */
+	 
 	  struct passwd *pw = getpwnam(username);
 	  if (!pw) {
 	  fprintf(stderr, "Error: Cannot get passwd entry. %s.\n", strerror(errno);
 	  return EXIT_FAILURE;
-	 
+	 */
 
 	return EXIT_SUCCESS; 
 
