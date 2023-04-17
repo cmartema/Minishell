@@ -100,13 +100,10 @@ int main(){
 				struct passwd *pw = getpwuid(user_id); 
 				if(!pw){
 					fprintf(stderr, "Error: Cannot get passwd entry. %s\n", strerror(errno)); 
-					//return EXIT_FAILURE; // im not sure you'd exit in failure or just restart the loop
-					// actually i'm gonna continue instead of exit_failure because that's how the shell should work
 					continue; 
 				}
 				const char *homedir = pw->pw_dir; 
 				if(chdir(homedir) == -1){
-					// probably need to fix this error message
 					fprintf(stderr, "Error: Cannot change directory to '%s'. %s.\n", homedir, strerror(errno)); 
 					continue; 
 				}
@@ -115,6 +112,7 @@ int main(){
 
 			}
 			else {
+				// might need to fix so that it accounts for quotes and mismatched quotes etc. 
 				if(chdir(args[1]) == -1){
 					fprintf(stderr, "Error: Cannot change directory to '%s'. %s.\n", args[1], strerror(errno));
 					continue;
@@ -122,6 +120,12 @@ int main(){
 			}
 
 		}
+		/*
+		else if(fork() == 0){
+			execvp(arg[0], arg); 
+		}
+		wait();
+	       */	
 
 	}
 
