@@ -126,7 +126,10 @@ int main(){
 				continue; 
 			}
 			else if(pid > 0) { //parent 
-				wait(NULL); 
+				if (wait(NULL) == -1) {
+				       fprintf(stderr, "Error: wait() failed. %s.\n", strerror(errno));	
+				       continue;	       
+				}
 			}
 			else{ // child 
 				if(execvp(args[0], args) == -1){
