@@ -60,9 +60,9 @@ int main(){
 				printf("\n");
 				errno = 0;
 				continue; 
-			} else if (feof(stdin)) {
-				printf("\n");
-				return EXIT_SUCCESS; 
+			} 
+			if (feof(stdin)) {
+				break; 
 			} else if (ferror(stdin)) {
 				printf("Error: failed to read from stdin. %s.\n", strerror(errno)); 
 				return EXIT_FAILURE;
