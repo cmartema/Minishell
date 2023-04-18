@@ -33,7 +33,7 @@ int main(){
 	action.sa_handler = catch_signal; 
 
 	if(sigaction(SIGINT, &action, NULL) == -1){
-		perror("sigaction(SIGINT)");
+		fprintf(stderr, "Error: Cannot register signal handler. %s.\n", strerror(errno));
 		return EXIT_FAILURE;
 	}
 
@@ -60,12 +60,11 @@ int main(){
 				printf("\n");
 				errno = 0;
 				continue; 
-				// we need to fix this. see part 6
 			} else if (feof(stdin)) {
 				printf("\n");
 				return EXIT_SUCCESS; 
 			} else if (ferror(stdin)) {
-				printf("\n");
+				printf("Error: failed to read from stdin. %s.\n", strerror(errno)); 
 				return EXIT_FAILURE;
 			}
 		}
@@ -111,7 +110,23 @@ int main(){
 
 			}
 			else {
-				// might need to fix so that it accounts for quotes and mismatched quotes etc. 
+				// might need to fix so that it accounts for quotes and mismatched quotes etc.
+				if(args[1][0] == '~'){
+					uid_t user_id = getuid();
+					struct passwd *pw = getpwuid(user_id);
+					if(!pw){
+						fprintf(stderr, "Error: Cannot get passwd entry. %s\n", strerror(errno));
+						continue;
+					}
+					const char *homedir = pw->pw_dir;
+					if(chdir(homedir) == -1){
+						fprintf(stderr, "Error: Cannot change directory to '%s'. %s.\n", homedir, strerror(errno));
+						continue;
+					}
+
+					args[1] += 2; 
+					
+				}
 				if(chdir(args[1]) == -1){
 					fprintf(stderr, "Error: Cannot change directory to '%s'. %s.\n", args[1], strerror(errno));
 					continue;
@@ -125,16 +140,22 @@ int main(){
 				fprintf(stderr, "Error: fork() failed. %s.\n", strerror(errno)); 
 				continue; 
 			}
-			else if(pid > 0) { //parent 
-				if (wait(NULL) == -1) {
-				       fprintf(stderr, "Error: wait() failed. %s.\n", strerror(errno));	
-				       continue;	       
-				}
+			else if(pid > 0) { //parent
+				int status; 
+				do{
+					if (waitpid(pid, &status, 0) == -1){
+						fprintf(stderr, "Error: wait() failed. %s.\n", strerror(errno));
+						continue; 
+					}
+					if (!WIFEXITED(status) || WEXITSTATUS(status) != EXIT_SUCCESS){
+						continue; 
+					}
+				} while (!WIFEXITED(status) && !WIFSIGNALED(status));
 			}
 			else{ // child 
 				if(execvp(args[0], args) == -1){
 					fprintf(stderr, "Error: exec() failed. %s\n", strerror(errno)); 
-					continue; 
+					exit(42);  
 				}
 			}
 			
