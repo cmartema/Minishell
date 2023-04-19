@@ -90,10 +90,115 @@ int main(){
 			break;
 		}
 		else if(!strcmp(args[0], "cd")){
-			if(num_args > 2){
+			char quote = '"';
+			if (num_args >= 2 && args[1][0] == quote) {
+				//Case 1: num_args = 2
+				if (num_args == 2) {
+					if (args[1][strlen(args[1]) - 1] == quote) {
+						char temp[2048];
+						int i = 0;
+						while (args[1][i+1] != quote) {
+							temp[i] = args[1][i+1];
+							i++;
+						}	
+						temp[i] = '\0';
+						args[1] = temp;
+
+						if(args[1][0] == '~'){
+							uid_t user_id = getuid();
+							struct passwd *pw = getpwuid(user_id);
+							if(!pw){
+								fprintf(stderr, "Error: Cannot get passwd entry. %s\n", strerror(errno));
+								continue;
+							}
+							const char *homedir = pw->pw_dir;
+							if(chdir(homedir) == -1){
+								fprintf(stderr, "Error: Cannot change directory to '%s'. %s.\n", homedir, strerror(errno));
+								continue;
+							}
+
+							args[1] += 2; 
+					
+						}
+						if(chdir(args[1]) == -1){
+							fprintf(stderr, "Error: Cannot change directory to '%s'. %s.\n", args[1], strerror(errno));
+							continue;
+						}
+					} else {
+						fprintf(stderr, "Error: Malformed command.\n");
+                				continue;
+				
+					}
+
+				//Case 2: Concated args
+				} else {
+					int i = 1;
+					int k = 0;
+					char temp[2048];
+					while (i < num_args) {
+						if (args[i][strlen(args[i]) - 2] == quote && args[i][strlen(args[i]) -1] == quote) {  
+							int j = 0;
+							while (args[i][j+1] != quote) {
+								temp[k] = args[i][j+1];
+								j++;
+								k++;
+							}
+							i++;
+
+						} else if (args[i][0] == quote && args[i][1] == quote && args[i][strlen(args[i]) - 1] == quote) {
+							int j = 1;
+							while (args[i][j+1] != quote) {
+								temp[k] = args[i][j+1];
+								j++;
+								k++;
+							}
+							i++;
+
+						}else if (args[i][0] != quote && args[i][strlen(args[i]) - 1] != quote) {
+							int j = 0;
+							temp[k] = ' ';
+							k++;
+							while(j < strlen(args[i]) ) {
+								temp[k]	= args[i][j];
+								j++;
+								k++;
+							}
+							temp[k] = ' ';
+							k++;
+							i++;
+						}else {		
+							fprintf(stderr, "Error: Malformed command.\n");
+                					break;				
+						}	
+					}	
+					temp[k+1] = '\0';
+					args[1] = temp;	
+					if(args[1][0] == '~'){
+							uid_t user_id = getuid();
+							struct passwd *pw = getpwuid(user_id);
+							if(!pw){
+								fprintf(stderr, "Error: Cannot get passwd entry. %s\n", strerror(errno));
+								continue;
+							}
+							const char *homedir = pw->pw_dir;
+							if(chdir(homedir) == -1){
+								fprintf(stderr, "Error: Cannot change directory to '%s'. %s.\n", homedir, strerror(errno));
+								continue;
+							}
+
+							args[1] += 2; 
+					
+						}
+						if(chdir(args[1]) == -1){
+							fprintf(stderr, "Error: Cannot change directory to '%s'. %s.\n", args[1], strerror(errno));
+							continue;
+						}
+				}
+			} else if(num_args > 2) {  
 				fprintf(stderr, "Error: Too many arguments to cd.\n");
 				continue;
 			}
+	
 			else if(num_args == 1 || !strcmp(args[1], "~")){
 				uid_t user_id = getuid();
 				struct passwd *pw = getpwuid(user_id); 
