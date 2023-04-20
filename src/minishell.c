@@ -1,9 +1,9 @@
 /****************************************
  * Name            : minishell.c
  * Authors         : Anita Bui-Martinez (adb2221) and Cristopher Marte Marte (cjm2301)
- * Version:          
- * Last modified   :
- * Description     :
+ * Version	   : 1.2          
+ * Last modified   : April 19th, 2023
+ * Description     : A minature version of our usual shell. 
 **************************************** */
 
 #include <errno.h>
@@ -19,18 +19,21 @@
 #define BRIGHTBLUE "\x1b[34;1m"
 #define DEFAULT    "\x1b[0m"
 
-volatile sig_atomic_t signal_val = 0;
+volatile sig_atomic_t interrupted = 0;
 
 /* Signal Handler */
 void catch_signal(int sig){
-	signal_val = sig;
+	interrupted = 1;
 }
 
 int main(){
 	//set up the signal catcher 
+	
 	struct sigaction action; 
 	memset(&action, 0, sizeof(struct sigaction));
 	action.sa_handler = catch_signal; 
+	
+	//signal(SIGINT, catch_signal); 
 
 	if(sigaction(SIGINT, &action, NULL) == -1){
 		fprintf(stderr, "Error: Cannot register signal handler. %s.\n", strerror(errno));
@@ -39,6 +42,13 @@ int main(){
 
 	// the main looooooop
 	while(true){
+		/*	
+		if(interrupted){
+			printf("\n"); 
+			interrupted = 0; 
+			continue; 
+		}
+		*/
 	
 	// this is to get the cwd so you can print it later
 		char cwd[1024]; 
@@ -62,12 +72,18 @@ int main(){
 				continue; 
 			} 
 			if (feof(stdin)) {
-				break; 
+				printf("Error: failed to read from stdin. %s.\n", strerror(errno));
+				return EXIT_FAILURE;  
 			} else if (ferror(stdin)) {
 				printf("Error: failed to read from stdin. %s.\n", strerror(errno)); 
 				return EXIT_FAILURE;
 			}
 		}
+		
+		if(strlen(buf) == 1){
+			continue; 
+		}
+
 		char *eoln = strchr(buf, '\n');
 		if(eoln != NULL){
 			*eoln = '\0';
@@ -80,12 +96,7 @@ int main(){
 		}
 		args[num_args] = NULL;
 
-		// this is just to test - have to remove
-		/*for(int i = 0; i < num_args; i++){
-			printf("args[%d] = %s\n", i, args[i]); 
-		}*/
-
-		// see what the user entered and if it's a special command 
+		// see what the user entered and if it's a special command i
 		if(!strcmp(args[0], "exit")) {
 			break;
 		}
@@ -215,7 +226,6 @@ int main(){
 
 			}
 			else {
-				// might need to fix so that it accounts for quotes and mismatched quotes etc.
 				if(args[1][0] == '~'){
 					uid_t user_id = getuid();
 					struct passwd *pw = getpwuid(user_id);
