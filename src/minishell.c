@@ -79,7 +79,8 @@ int main(){
 				return EXIT_FAILURE;
 			}
 		}
-		
+	
+		// see if the user entered just a space	
 		if(strlen(buf) == 1){
 			continue; 
 		}
@@ -164,8 +165,25 @@ int main(){
 								k++;
 							}
 							i++;
+						} else if (args[i][0] == quote && args[i][strlen(args[i]) - 1] != quote) {
+							int j = 0; 
+							while(args[i][j+1] != '\0'){
+								temp[k] = args[i][j+1];
+								j++;
+								k++; 
+							}
+							i++;
+							
+						} else if (args[i][0] != quote && args[i][strlen(args[i]) - 1] == quote){
+							int j = 0; 
+							while(args[i][j] != quote){
+								temp[k] = args[i][j];
+								j++;
+								k++;
+							}
+							i++;
 
-						}else if (args[i][0] != quote && args[i][strlen(args[i]) - 1] != quote) {
+						} else if (args[i][0] != quote && args[i][strlen(args[i]) - 1] != quote) {
 							int j = 0;
 							temp[k] = ' ';
 							k++;
@@ -259,8 +277,14 @@ int main(){
 				int status; 
 				do{
 					if (waitpid(pid, &status, 0) == -1){
-						fprintf(stderr, "Error: wait() failed. %s.\n", strerror(errno));
-						continue; 
+						if(errno == EINTR){
+							printf("\n"); 
+							continue;
+						}
+						else{
+							fprintf(stderr, "Error: wait() failed. %s.\n", strerror(errno));
+							continue; 
+						}
 					}
 					if (!WIFEXITED(status) || WEXITSTATUS(status) != EXIT_SUCCESS){
 						continue; 
